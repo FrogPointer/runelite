@@ -8,8 +8,8 @@ import net.runelite.api.mixins.Mixin;
 import net.runelite.api.mixins.Replace;
 import net.runelite.api.mixins.Shadow;
 import net.runelite.rs.api.RSClient;
-import net.runelite.rs.api.RSEvictingDualNodeHashTable;
 import net.runelite.rs.api.RSItemComposition;
+import net.runelite.rs.api.RSModel;
 
 @Mixin(RSItemComposition.class)
 public abstract class RSItemCompositionMixin implements RSItemComposition
@@ -22,18 +22,19 @@ public abstract class RSItemCompositionMixin implements RSItemComposition
 	@Inject
 	private int shiftClickActionIndex = DEFAULT_CUSTOM_SHIFT_CLICK_INDEX;
 
-	@MethodHook(value = "<clinit>", end = true)
 	@Inject
-	public static void rl$clinit()
+	private int modelOverride = -1;
+
+	@Override
+	@Inject
+	public void setModelOverride(int id)
 	{
-		RSEvictingDualNodeHashTable cachedModels2 = client.getItemCompositionCache();
-		cachedModels2.resize(1024);
+		modelOverride = id;
 	}
 
 	@Inject
 	RSItemCompositionMixin()
 	{
-
 	}
 
 	@Inject
@@ -71,6 +72,18 @@ public abstract class RSItemCompositionMixin implements RSItemComposition
 		final PostItemComposition event = new PostItemComposition();
 		event.setItemComposition(this);
 		client.getCallbacks().post(event);
+	}
+
+	@Copy("getModel")
+	@Replace("getModel")
+	public RSModel copy$getModel(int quantity)
+	{
+		if (modelOverride == -1)
+		{
+			return copy$getModel(quantity);
+		}
+
+		return client.getRSItemDefinition(modelOverride).getModel(quantity);
 	}
 
 	@Inject

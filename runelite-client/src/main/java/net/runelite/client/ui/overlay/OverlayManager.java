@@ -40,13 +40,17 @@ import javax.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import net.runelite.api.MenuAction;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.widgets.WidgetID;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.RuneLiteConfig;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.events.PluginChanged;
 
 /**
@@ -81,8 +85,8 @@ public class OverlayManager
 		// draw *earlier* so that they are closer to their
 		// defined position.
 		return aPos == OverlayPosition.DYNAMIC
-			? a.getPriority().compareTo(b.getPriority())
-			: b.getPriority().compareTo(a.getPriority());
+				? a.getPriority().compareTo(b.getPriority())
+				: b.getPriority().compareTo(a.getPriority());
 	};
 
 	/**
@@ -104,12 +108,14 @@ public class OverlayManager
 	private ArrayListMultimap<Object, Overlay> overlayMap = ArrayListMultimap.create();
 
 	private final ConfigManager configManager;
+	private final EventBus eventBus;
 	private final RuneLiteConfig runeLiteConfig;
 
 	@Inject
-	private OverlayManager(final ConfigManager configManager, final RuneLiteConfig runeLiteConfig)
+	private OverlayManager(final ConfigManager configManager, final EventBus eventBus, final RuneLiteConfig runeLiteConfig)
 	{
 		this.configManager = configManager;
+		this.eventBus = eventBus;
 		this.runeLiteConfig = runeLiteConfig;
 	}
 
@@ -129,6 +135,32 @@ public class OverlayManager
 	{
 		overlays.forEach(this::loadOverlay);
 		rebuildOverlayLayers();
+	}
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		MenuAction menuAction = event.getMenuAction();
+		if (menuAction != MenuAction.RUNELITE_OVERLAY && menuAction != MenuAction.RUNELITE_OVERLAY_CONFIG)
+		{
+			return;
+		}
+
+		event.consume();
+
+		Overlay overlay = overlays.get(event.getId());
+		if (overlay != null)
+		{
+			List<OverlayMenuEntry> menuEntries = overlay.getMenuEntries();
+			OverlayMenuEntry overlayMenuEntry = menuEntries.stream()
+					.filter(me -> me.getOption().equals(event.getMenuOption()))
+					.findAny()
+					.orElse(null);
+			if (overlayMenuEntry != null)
+			{
+				eventBus.post(new OverlayMenuClicked(overlayMenuEntry, overlay));
+			}
+		}
 	}
 
 	/**
@@ -285,6 +317,7 @@ public class OverlayManager
 			{
 				case ABOVE_SCENE:
 				case UNDER_WIDGETS:
+				case AFTER_MIRROR:
 				case ALWAYS_ON_TOP:
 					overlayMap.put(layer, overlay);
 					break;
@@ -300,6 +333,7 @@ public class OverlayManager
 			{
 				overlayMap.put(drawHook, overlay);
 			}
+
 		}
 
 		for (Object key : overlayMap.keys())
@@ -335,15 +369,15 @@ public class OverlayManager
 		if (overlay.getPreferredLocation() != null)
 		{
 			configManager.setConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key,
-				overlay.getPreferredLocation());
+					RUNELITE_CONFIG_GROUP_NAME,
+					key,
+					overlay.getPreferredLocation());
 		}
 		else
 		{
 			configManager.unsetConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key);
+					RUNELITE_CONFIG_GROUP_NAME,
+					key);
 		}
 	}
 
@@ -353,15 +387,15 @@ public class OverlayManager
 		if (overlay.getPreferredSize() != null)
 		{
 			configManager.setConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key,
-				overlay.getPreferredSize());
+					RUNELITE_CONFIG_GROUP_NAME,
+					key,
+					overlay.getPreferredSize());
 		}
 		else
 		{
 			configManager.unsetConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key);
+					RUNELITE_CONFIG_GROUP_NAME,
+					key);
 		}
 	}
 
@@ -371,15 +405,15 @@ public class OverlayManager
 		if (overlay.getPreferredPosition() != null)
 		{
 			configManager.setConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key,
-				overlay.getPreferredPosition());
+					RUNELITE_CONFIG_GROUP_NAME,
+					key,
+					overlay.getPreferredPosition());
 		}
 		else
 		{
 			configManager.unsetConfiguration(
-				RUNELITE_CONFIG_GROUP_NAME,
-				key);
+					RUNELITE_CONFIG_GROUP_NAME,
+					key);
 		}
 	}
 

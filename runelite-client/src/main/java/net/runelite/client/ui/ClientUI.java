@@ -525,10 +525,7 @@ public class ClientUI
 			frame.revalidateMinimumSize();
 
 			// Create tray icon (needs to be created after frame is packed)
-			if (config.enableTrayIcon())
-			{
-				trayIcon = SwingUtil.createTrayIcon(ICON, title, frame);
-			}
+			trayIcon = SwingUtil.createTrayIcon(ICON, title, frame);
 
 			// Move frame around (needs to be done after frame is packed)
 			if (config.rememberScreenBounds() && !safeMode)

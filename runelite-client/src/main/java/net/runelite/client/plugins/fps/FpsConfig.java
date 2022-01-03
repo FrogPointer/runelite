@@ -95,4 +95,9 @@ public interface FpsConfig extends Config
 	{
 		return true;
 	}
-}
+
+
+
+	}
+
+

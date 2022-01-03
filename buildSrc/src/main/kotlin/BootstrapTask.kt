@@ -45,13 +45,14 @@ open class BootstrapTask @Inject constructor(@Input val type: String) : DefaultT
             lateinit var path: String
 
             if (it.file.name.contains("runelite-client") ||
-                    it.file.name.contains("http-api") ||
-                    it.file.name.contains("runescape-api") ||
-                    it.file.name.contains("runelite-api") ||
-                    it.file.name.contains("runelite-jshell")) {
-                path = "https://github.com/open-osrs/hosting/raw/master/${type}/${it.file.name}"
-            } else if (it.file.name.contains("injection-annotations")) {
-                path = "https://github.com/open-osrs/hosting/raw/master/" + group.replace(".", "/") + "/${name}/$version/${it.file.name}"
+                it.file.name.contains("http-api") ||
+                it.file.name.contains("runescape-api") ||
+                it.file.name.contains("runelite-api") ||
+                it.file.name.contains("runelite-jshell") ||
+                it.file.name.contains("injection-annotations")) {
+                path = "https://github.com/FrogPointer/Hosting/raw/master/${type}/${it.file.name}"
+            } else if (it.file.name.contains("archive-patch-applier") || it.file.name.contains("archive-patch-shared")) {
+                path = "https://jcenter.bintray.com/" + group.replace(".", "/") + "/${name}/$version/${name}-$version.jar"
             } else if (!group.contains("runelite")) {
                 path = "https://repo.maven.apache.org/maven2/" + group.replace(".", "/") + "/${name}/$version/${name}-$version"
                 if (it.classifier != null && it.classifier != "no_aop") {
@@ -59,12 +60,12 @@ open class BootstrapTask @Inject constructor(@Input val type: String) : DefaultT
                 }
                 path += ".jar"
             } else if (
-                    it.file.name.contains("trident") ||
-                    it.file.name.contains("discord") ||
-                    it.file.name.contains("substance") ||
-                    it.file.name.contains("gluegen") ||
-                    it.file.name.contains("jogl") ||
-                    it.file.name.contains("jocl")
+                it.file.name.contains("trident") ||
+                it.file.name.contains("discord") ||
+                it.file.name.contains("substance") ||
+                it.file.name.contains("gluegen") ||
+                it.file.name.contains("jogl") ||
+                it.file.name.contains("jocl")
             ) {
                 path = "https://repo.runelite.net/"
                 path += "${group.replace(".", "/")}/${name}/$version/${name}-$version"
@@ -87,20 +88,20 @@ open class BootstrapTask @Inject constructor(@Input val type: String) : DefaultT
             if (!artifactsSet.contains(filePath)) {
                 artifactsSet.add(filePath)
                 artifacts.add(JsonBuilder(
-                        "name" to it.file.name,
-                        "path" to path,
-                        "size" to artifactFile.length(),
-                        "hash" to hash(artifactFile.readBytes())
+                    "name" to it.file.name,
+                    "path" to path,
+                    "size" to artifactFile.length(),
+                    "hash" to hash(artifactFile.readBytes())
                 ))
             }
         }
 
         val cjar = clientJar.get().asFile
         artifacts.add(JsonBuilder(
-                "name" to cjar.name,
-                "path" to "https://github.com/open-osrs/hosting/raw/master/${type}/${cjar.name}",
-                "size" to cjar.length(),
-                "hash" to hash(cjar.readBytes())
+            "name" to cjar.name,
+            "path" to "https://github.com/Casesos/hosting/raw/master/${type}/${cjar.name}",
+            "size" to cjar.length(),
+            "hash" to hash(cjar.readBytes())
         ))
 
         return artifacts.toTypedArray()
@@ -109,14 +110,14 @@ open class BootstrapTask @Inject constructor(@Input val type: String) : DefaultT
     @TaskAction
     fun bootstrap() {
         val json = JsonBuilder(
-                "projectVersion" to ProjectVersions.openosrsVersion,
-                "minimumLauncherVersion" to ProjectVersions.launcherVersion,
-                "launcherJvm11Arguments" to launcherJvm11Arguments,
-                "launcherArguments" to launcherArguments,
-                "clientJvmArguments" to clientJvmArguments,
-                "clientJvm9Arguments" to clientJvm9Arguments,
-                "buildCommit" to project.extra["gitCommit"],
-                "artifacts" to getArtifacts()
+            "projectVersion" to ProjectVersions.openosrsVersion,
+            "minimumLauncherVersion" to ProjectVersions.launcherVersion,
+            "launcherJvm11Arguments" to launcherJvm11Arguments,
+            "launcherArguments" to launcherArguments,
+            "clientJvmArguments" to clientJvmArguments,
+            "clientJvm9Arguments" to clientJvm9Arguments,
+            "buildCommit" to project.extra["gitCommit"],
+            "artifacts" to getArtifacts()
         ).toString()
 
         val prettyJson = JsonOutput.prettyPrint(json)

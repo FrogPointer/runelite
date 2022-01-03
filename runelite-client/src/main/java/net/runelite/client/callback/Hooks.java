@@ -24,13 +24,7 @@
  */
 package net.runelite.client.callback;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -62,6 +56,7 @@ import net.runelite.client.Notifier;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.DrawFinished;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.task.Scheduler;
@@ -71,6 +66,7 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayRenderer;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.DeferredEventBus;
+import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.RSTimeUnit;
 
 /**
@@ -86,6 +82,12 @@ public class Hooks implements Callbacks
 
 	private static final GameTick GAME_TICK = new GameTick();
 	private static final BeforeRender BEFORE_RENDER = new BeforeRender();
+
+	//Mirror mode
+	private static final DrawFinished drawFinishedEvent = new DrawFinished();
+	private int mouseX = 0;
+	private int mouseY = 0;
+	private final Image cursor = ImageUtil.getResourceStreamFromClass(Hooks.class, "cursor.png");
 
 	private static Client client;
 	private final OverlayRenderer renderer;
@@ -136,19 +138,19 @@ public class Hooks implements Callbacks
 
 	@Inject
 	private Hooks(
-		Client client,
-		OverlayRenderer renderer,
-		EventBus eventBus,
-		DeferredEventBus deferredEventBus,
-		Scheduler scheduler,
-		InfoBoxManager infoBoxManager,
-		ChatMessageManager chatMessageManager,
-		MouseManager mouseManager,
-		KeyManager keyManager,
-		ClientThread clientThread,
-		DrawManager drawManager,
-		Notifier notifier,
-		ClientUI clientUi
+			Client client,
+			OverlayRenderer renderer,
+			EventBus eventBus,
+			DeferredEventBus deferredEventBus,
+			Scheduler scheduler,
+			InfoBoxManager infoBoxManager,
+			ChatMessageManager chatMessageManager,
+			MouseManager mouseManager,
+			KeyManager keyManager,
+			ClientThread clientThread,
+			DrawManager drawManager,
+			Notifier notifier,
+			ClientUI clientUi
 	)
 	{
 		this.client = client;
@@ -295,12 +297,16 @@ public class Hooks implements Callbacks
 	@Override
 	public MouseEvent mouseDragged(MouseEvent mouseEvent)
 	{
+		mouseX = mouseEvent.getX();
+		mouseY = mouseEvent.getY();
 		return mouseManager.processMouseDragged(mouseEvent);
 	}
 
 	@Override
 	public MouseEvent mouseMoved(MouseEvent mouseEvent)
 	{
+		mouseX = mouseEvent.getX();
+		mouseY = mouseEvent.getY();
 		return mouseManager.processMouseMoved(mouseEvent);
 	}
 
@@ -368,7 +374,7 @@ public class Hooks implements Callbacks
 			Dimension stretchedDimensions = client.getStretchedDimensions();
 
 			if (lastStretchedDimensions == null || !lastStretchedDimensions.equals(stretchedDimensions)
-				|| (stretchedImage != null && stretchedImage.validate(gc) == VolatileImage.IMAGE_INCOMPATIBLE))
+					|| (stretchedImage != null && stretchedImage.validate(gc) == VolatileImage.IMAGE_INCOMPATIBLE))
 			{
 				/*
 					Reuse the resulting image instance to avoid creating an extreme amount of objects
@@ -391,9 +397,9 @@ public class Hooks implements Callbacks
 			}
 
 			stretchedGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-				client.isStretchedFast()
-					? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-					: RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+					client.isStretchedFast()
+							? RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+							: RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 			stretchedGraphics.drawImage(image, 0, 0, stretchedDimensions.width, stretchedDimensions.height, null);
 
 			finalImage = stretchedImage;
@@ -401,6 +407,22 @@ public class Hooks implements Callbacks
 		else
 		{
 			finalImage = image;
+		}
+
+		if (client.isMirrored())
+		{
+			drawFinishedEvent.image = copy(finalImage);
+			drawFinishedEvent.image.getGraphics().drawImage(cursor, mouseX, mouseY, null);
+			eventBus.post(drawFinishedEvent);
+		}
+
+		try
+		{
+			renderer.renderOverlayLayer(graphics2d, OverlayLayer.AFTER_MIRROR);
+		}
+		catch (Exception ex)
+		{
+			log.warn("Error during post-mirror rendering", ex);
 		}
 
 		// Draw the image onto the game canvas
@@ -436,6 +458,21 @@ public class Hooks implements Callbacks
 		try
 		{
 			renderer.renderOverlayLayer(graphics2d, OverlayLayer.ABOVE_SCENE);
+		}
+		catch (Exception ex)
+		{
+			log.warn("Error during overlay rendering", ex);
+		}
+	}
+
+	public void drawMirror()
+	{
+		MainBufferProvider bufferProvider = (MainBufferProvider) client.getBufferProvider();
+		Graphics2D graphics2d = getGraphics(bufferProvider);
+
+		try
+		{
+			renderer.renderOverlayLayer(graphics2d, OverlayLayer.AFTER_MIRROR);
 		}
 		catch (Exception ex)
 		{
@@ -543,13 +580,13 @@ public class Hooks implements Callbacks
 
 		Skill skill = Skill.values()[statId];
 		FakeXpDrop fakeXpDrop = new FakeXpDrop(
-			skill,
-			xp
+				skill,
+				xp
 		);
 		eventBus.post(fakeXpDrop);
 	}
 
-	
+
 	public static void clearColorBuffer(int x, int y, int width, int height, int color)
 	{
 		BufferProvider bp = client.getBufferProvider();

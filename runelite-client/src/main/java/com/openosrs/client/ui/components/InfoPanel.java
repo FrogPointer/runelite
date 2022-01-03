@@ -57,7 +57,7 @@ public class InfoPanel extends JPanel
 	private static final BufferedImage TRANSPARENT_LOGO = ImageUtil.getResourceStreamFromClass(InfoPanel.class, "/openosrs.png");
 	static final Dimension PANEL_SIZE = new Dimension(200, OpenOSRSSplashScreen.FRAME_SIZE.height);
 	private static final Dimension VERSION_SIZE = new Dimension(PANEL_SIZE.width, 25);
-	private static final File RUNELITE_DIR = new File(System.getProperty("user.home"), ".openosrs");
+	private static final File RUNELITE_DIR = new File(System.getProperty("user.home"), ".PkLite");
 	private static final File LOGS_DIR = new File(RUNELITE_DIR, "logs");
 
 	public InfoPanel()
@@ -89,7 +89,7 @@ public class InfoPanel extends JPanel
 		c.weighty = 0;
 
 		// OpenOSRS version
-		this.add(createPanelTextButton("OpenOSRS Version: " + OpenOSRS.SYSTEM_VERSION), c);
+		this.add(createPanelTextButton("RuneLite Version: " + OpenOSRS.SYSTEM_VERSION), c);
 		c.gridy++;
 
 		final JLabel logsFolder = createPanelButton("Open logs folder", null, () -> LinkBrowser.openLocalFile(LOGS_DIR));

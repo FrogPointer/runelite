@@ -10,8 +10,7 @@ public final class EvictingDualNodeHashTable {
 	@ObfuscatedSignature(
 		descriptor = "Lnc;"
 	)
-	@Export("dualNode")
-	DualNode dualNode;
+	DualNode field2797;
 	@ObfuscatedName("b")
 	@Export("capacity")
 	int capacity;
@@ -32,7 +31,7 @@ public final class EvictingDualNodeHashTable {
 	IterableDualNodeQueue deque;
 
 	public EvictingDualNodeHashTable(int var1) {
-		this.dualNode = new DualNode();
+		this.field2797 = new DualNode();
 		this.deque = new IterableDualNodeQueue();
 		this.capacity = var1;
 		this.remainingCapacity = var1;
@@ -80,7 +79,7 @@ public final class EvictingDualNodeHashTable {
 			DualNode var4 = this.deque.removeLast();
 			var4.remove();
 			var4.removeDual();
-			if (var4 == this.dualNode) {
+			if (var4 == this.field2797) {
 				var4 = this.deque.removeLast();
 				var4.remove();
 				var4.removeDual();
@@ -98,7 +97,7 @@ public final class EvictingDualNodeHashTable {
 	public void clear() {
 		this.deque.clear();
 		this.hashTable.clear();
-		this.dualNode = new DualNode();
+		this.field2797 = new DualNode();
 		this.remainingCapacity = this.capacity;
 	}
 }

@@ -323,8 +323,8 @@ public abstract class RSWidgetMixin implements RSWidget
 		}
 
 		int columns = getWidth(); // the number of item slot columns is stored here
-		int xPadding = getPaddingX();
-		int yPadding = getPaddingY();
+		int xPitch = getXPitch();
+		int yPitch = getYPitch();
 		int itemId = itemIds[index];
 		int itemQuantity = itemQuantities[index];
 
@@ -335,8 +335,8 @@ public abstract class RSWidgetMixin implements RSWidget
 
 		int row = index / columns;
 		int col = index % columns;
-		int itemX = rl$x + ((ITEM_SLOT_SIZE + xPadding) * col);
-		int itemY = rl$y + ((ITEM_SLOT_SIZE + yPadding) * row);
+		int itemX = rl$x + ((ITEM_SLOT_SIZE + xPitch) * col);
+		int itemY = rl$y + ((ITEM_SLOT_SIZE + yPitch) * row);
 
 		boolean isDragged = isWidgetItemDragged(index);
 		int dragOffsetX = 0;

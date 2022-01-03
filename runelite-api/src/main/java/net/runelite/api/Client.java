@@ -644,12 +644,6 @@ public interface Client extends GameEngine
 	MenuEntry createMenuEntry(int idx);
 
 	/**
-	 * Create a new menu entry
-	 * @return the newly created menu entry
-	 */
-	MenuEntry createMenuEntry(String option, String target, int identifier, int opcode, int param1, int param2, boolean forceLeftClick);
-
-	/**
 	 * Gets an array of currently open right-click menu entries that can be
 	 * clicked and activated.
 	 *
@@ -964,6 +958,20 @@ public interface Client extends GameEngine
 	 * Get the total experience of the player
 	 */
 	long getOverallExperience();
+
+	/**
+	 * Gets the game drawing mode.
+	 *
+	 * @return the game drawing mode
+	 */
+	int getGameDrawingMode();
+
+	/**
+	 * Sets the games drawing mode.
+	 *
+	 * @param gameDrawingMode the new drawing mode
+	 */
+	void setGameDrawingMode(int gameDrawingMode);
 
 	/**
 	 * Refreshes the chat.
@@ -2070,7 +2078,7 @@ public interface Client extends GameEngine
 	int getItemCount();
 
 	/**
-	 * Makes all widgets behave as if they are {@link WidgetConfig#WIDGET_USE_TARGET}
+	 * Makes all widgets behave as if they are {@link}
 	 */
 	void setAllWidgetsAreOpTargetable(boolean value);
 
@@ -2112,7 +2120,6 @@ public interface Client extends GameEngine
 	 * @param pixelWidth   pretty much horizontal scale
 	 * @param pixelHeight  pretty much vertical scale
 	 * @param oldWidth     old width
-	 * @see net.runelite.client.util.ImageUtil#resizeSprite(Client, SpritePixels, int, int)
 	 */
 	void scaleSprite(int[] canvas, int[] pixels, int color, int pixelX, int pixelY, int canvasIdx, int canvasOffset, int newWidth, int newHeight, int pixelWidth, int pixelHeight, int oldWidth);
 
